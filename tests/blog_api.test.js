@@ -13,7 +13,7 @@ const Blog = require('../models/blog')
 
 beforeEach(async () => {
   await Blog.deleteMany({})
-  await Note.insertMany(helper.initialNotes)
+  await Blog.insertMany(helper.initialBlogs)
 })
 
 describe('GET requests to already existing blogs'), () => {
@@ -79,15 +79,15 @@ describe('POST requests to already existing blogs'), () => {
 
   test('if title or url properties are missing from the request data, responds with status code 400 Bad Request', async () => {
     const newBlogWithoutTitle = {
-      'author': 'fifth author',
-      'url': 'fifthtest.com.test',
-      'likes': 50
+      author: 'fifth author',
+      url: 'fifthtest.com.test',
+      likes: 50
     }
 
     const newBlogWithoutURL = {
-      'title': 'sixth test post',
-      'author': 'sixth author',
-      'likes': 60
+      title: 'sixth test post',
+      author: 'sixth author',
+      likes: 60
     }
 
     await api
@@ -106,7 +106,46 @@ describe('POST requests to already existing blogs'), () => {
   })
 }
 
+describe('DELETE request to a single blog in an already populated database', () => {
+  test('a blog can be deleted', async () => {
+    const blogsBeforeDeletion = await helper.blogsInDb()
+    const blogToDelete = blogsBeforeDeletion[0]
+  
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .expect(204)
+  
+    const blogsAfterDeletion = await helper.blogsInDb()
+    assert(!blogsAfterDeletion.includes(blogToDelete))
+    assert.strictEqual(blogsAfterDeletion.length, helper.initialBlogs.length - 1)
+  })
+})
 
+describe('PUT request', () => {
+  test('updating the information of an individual blog post', async () => {
+
+    const blogToUpdate = await Blog.findOne({});
+    
+    const updatedBlog = {
+      title: 'seventh blog post',
+      author: 'seventh author',
+      url: 'seventhtest.com.test',
+      likes: 70
+    }
+
+    await api
+      .put(`/api/blogs/${blogToUpdate.id}`)
+      .send(updatedBlog)
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+    const blogsDbAfterUpdate = await helper.blogsInDb()
+    const blogThatWasUpdated = blogsDbAfterUpdate.find(blog => blog.id === blogToUpdate.id)
+  
+    assert.strictEqual(blogsDbAfterUpdate.length, helper.initialBlogs.length)
+    assert.strictEqual(blogThatWasUpdated.likes, updatedBlog.likes)
+  })
+})
 
 
 after(async () => {
