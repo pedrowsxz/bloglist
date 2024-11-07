@@ -5,6 +5,7 @@ Content-Type: application/json
   "title": "second post",
   "author": "second author",
   "url": "second.com.test",
-  "likes": 2
+  "likes": 2,
+  "user": "672c506afe857d21fe0d72d9"
 }
 
